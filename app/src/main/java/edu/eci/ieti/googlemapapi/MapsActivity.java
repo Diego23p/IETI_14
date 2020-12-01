@@ -7,9 +7,13 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -31,6 +35,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private final int ACCESS_LOCATION_PERMISSION_CODE = 44;
 
+    private Location mCurrentLocation;
+
+    private TextView address;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +53,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        address = (TextView) findViewById( R.id.address );
 
     }
 
@@ -88,34 +98,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             public void onSuccess(Location location) {
                                 // Got last known location. In some rare situations this can be null.
                                 if (location != null) {
-                                    addMarkerAndZoom( location, "My Location", 15 );
+                                    addMarkerAndZoom(location, "My Location", 15);
                                 }
                             }
                         });
-            }
-            else
-            {
-                ActivityCompat.requestPermissions( this, permissions, ACCESS_LOCATION_PERMISSION_CODE );
+            } else {
+                ActivityCompat.requestPermissions(this, permissions, ACCESS_LOCATION_PERMISSION_CODE);
             }
         }
     }
 
-    public static boolean hasPermissions(Context context, String[] permissions )
-    {
-        for ( String permission : permissions )
-        {
-            if ( ContextCompat.checkSelfPermission( context, permission ) == PackageManager.PERMISSION_DENIED )
-            {
+    public static boolean hasPermissions(Context context, String[] permissions) {
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_DENIED) {
                 return false;
             }
         }
         return true;
     }
 
-    public void addMarkerAndZoom( Location location, String title, int zoom  )
-    {
-        LatLng myLocation = new LatLng( location.getLatitude(), location.getLongitude() );
-        googleMap.addMarker( new MarkerOptions().position( myLocation ).title( title ) );
-        googleMap.moveCamera( CameraUpdateFactory.newLatLngZoom( myLocation, zoom ) );
+    public void addMarkerAndZoom(Location location, String title, int zoom) {
+        LatLng myLocation = new LatLng(location.getLatitude(), location.getLongitude());
+        googleMap.addMarker(new MarkerOptions().position(myLocation).title(title));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(myLocation, zoom));
+
+        mCurrentLocation = location;
+    }
+
+    public void onFindAddressClicked(View view) {
+        startFetchAddressIntentService();
+    }
+
+    public void startFetchAddressIntentService() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (location != null) {
+                            AddressResultReceiver addressResultReceiver = new AddressResultReceiver(new Handler());
+                            addressResultReceiver.setAddressResultListener(new AddressResultListener() {
+                                @Override
+                                public void onAddressFound(final String address) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            MapsActivity.this.address.setText(address);
+                                            MapsActivity.this.address.setVisibility(View.VISIBLE);
+                                        }
+                                    });
+
+
+                                }
+                            });
+                            Intent intent = new Intent(MapsActivity.this, FetchAddressIntentService.class);
+                            intent.putExtra(FetchAddressIntentService.RECEIVER, addressResultReceiver);
+                            intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA, location);
+                            startService(intent);
+                        }
+                    }
+                });
     }
 }

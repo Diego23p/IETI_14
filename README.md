@@ -59,7 +59,9 @@ git clone https://github.com/Diego23p/IETI_14.git
 
 ![](/img/3.png)
 
+## Parte 3: Uso de la API de geolocalización y GoogleApiClient
 
+![](/img/4.png)
 
 
 
