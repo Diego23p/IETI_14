@@ -161,4 +161,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 });
     }
+
+    public void openNewLocationActivity(View view) {
+        Intent intent = new Intent(this, inputNewLocation.class);
+        startActivity(intent);
+    }
 }

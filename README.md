@@ -63,10 +63,8 @@ git clone https://github.com/Diego23p/IETI_14.git
 
 ![](/img/4.png)
 
+## Parte 4: Implementar la función Agregar ubicación
 
+![](/img/5.png)
 
-
-
-
-
-
+![](/img/6.png)
