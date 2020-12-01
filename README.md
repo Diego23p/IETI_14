@@ -53,9 +53,11 @@ git clone https://github.com/Diego23p/IETI_14.git
 
 ![](/img/1.png)
 
+## Parte 2: acceder al objeto Mapa y mostrar la ubicación del usuario
 
+![](/img/2.png)
 
-
+![](/img/3.png)
 
 
 
